@@ -55,14 +55,32 @@
 }
 
 .bc-preview-image {
+  position: relative;
   aspect-ratio: 4 / 3;
   background: #f4f4f4;
   border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-size: cover;
-  background-position: center;
+  overflow: hidden;
+}
+
+.bc-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.bc-preview-placeholder-badge {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
 }
 
 .bc-price {

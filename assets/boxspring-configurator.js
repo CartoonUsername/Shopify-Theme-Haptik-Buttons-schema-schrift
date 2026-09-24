@@ -94,6 +94,57 @@
     return opt ? opt.priceDelta || 0 : 0;
   }
 
+  /**
+   * Erzeugt eine reine Platzhalter-Ebene als Daten-URI-SVG (transparenter
+   * Hintergrund, eine einfache Form + Label) für einen Vorschau-Layer, für
+   * den noch kein echtes Foto vorliegt. Kind bestimmt Form/Position, damit
+   * mehrere Ebenen übereinander optisch als "Bett" lesbar bleiben.
+   *
+   * WICHTIG: Das ist bewusst *kein* echtes Produktfoto und darf nie als
+   * eines präsentiert werden. Sobald echte, freigegebene Fotos vorliegen,
+   * ersetzt man pro Option einfach previewImage (URL, transparenter
+   * Hintergrund, gleiches 800×600-Raster) in den Daten – der Renderer hier
+   * bleibt unverändert, siehe layerImage().
+   */
+  function placeholderLayerSvg(kind, label, color) {
+    var w = 800, h = 600;
+    var shape = '';
+    var labelX = 16, labelY = 24, anchor = 'start';
+    color = color || '#c9c2b2';
+
+    if (kind === 'base') {
+      shape =
+        '<rect x="0" y="0" width="' + w + '" height="' + h + '" fill="' + color + '"/>' +
+        '<rect x="120" y="260" width="560" height="260" rx="24" fill="#ffffff" fill-opacity="0.55"/>';
+    } else if (kind === 'headboard') {
+      shape = '<rect x="140" y="60" width="520" height="180" rx="16" fill="' + color + '"/>';
+      labelY = 260;
+    } else if (kind === 'fabric') {
+      shape = '<rect x="120" y="260" width="560" height="260" rx="24" fill="' + color + '" fill-opacity="0.45"/>';
+      labelY = 300; labelX = w / 2; anchor = 'middle';
+    } else if (kind === 'feet') {
+      shape =
+        '<rect x="150" y="520" width="26" height="40" fill="' + color + '"/>' +
+        '<rect x="624" y="520" width="26" height="40" fill="' + color + '"/>';
+      labelY = 580;
+    }
+
+    var safeLabel = String(label || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    var svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">' +
+      shape +
+      '<text x="' + labelX + '" y="' + labelY + '" font-family="sans-serif" font-size="16" fill="#2c2a25" text-anchor="' + anchor + '">' + safeLabel + '</text>' +
+      '</svg>';
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+  }
+
+  // Liefert die Bildquelle für einen Vorschau-Layer: echtes Foto, falls in
+  // den Daten hinterlegt (previewImage), sonst der generierte Platzhalter.
+  function layerImage(kind, option, label, color) {
+    if (option && option.previewImage) return option.previewImage;
+    return placeholderLayerSvg(kind, label, color);
+  }
+
   function optionLabel(step, option) {
     if (!option) return null;
     if (step === 'size') return option.width + ' × ' + option.length + ' cm';
@@ -226,8 +277,39 @@
   BoxspringConfigurator.prototype.render = function () {
     this.renderActiveStepButton();
     this.renderOptionsForStep();
+    this.renderPreview();
     this.renderPrice();
     this.renderSummary();
+  };
+
+  // Baut die Live-Vorschau aus vier übereinanderliegenden Ebenen (Basis-
+  // Szene je Serie/Größe, Kopfteil, Stoff-Farbe, Füße). Läuft bei *jeder*
+  // Auswahländerung, egal welcher Schritt gerade aktiv ist – Kopfteil-
+  // Wechsel ändert also sofort das Bild, auch während man z. B. gerade im
+  // Extras-Schritt ist.
+  BoxspringConfigurator.prototype.renderPreview = function () {
+    var series = this.currentSeries();
+    var size = series && findById(series.sizes, this.selection.size);
+    var headboard = findById(this.data.headboards, this.selection.headboard);
+    var fabric = findById(this.data.fabrics, this.selection.fabric);
+    var feet = findById(this.data.feet, this.selection.feet);
+
+    var sizeLabel = size ? size.width + ' × ' + size.length + ' cm' : '';
+    var seriesLabel = (series ? series.name : this.data.brand || 'Bett') + (sizeLabel ? ' · ' + sizeLabel : '');
+
+    var layers = [
+      { kind: 'base', option: series, label: seriesLabel, color: series && series.previewSwatch },
+      { kind: 'headboard', option: headboard, label: 'Kopfteil: ' + (headboard ? headboard.name : '—'), color: '#c2b9a5' },
+      { kind: 'fabric', option: fabric, label: fabric ? fabric.name : '', color: (fabric && fabric.swatchColor) || '#b7ae9c' },
+      { kind: 'feet', option: feet, label: '', color: '#4a463d' }
+    ];
+
+    this.previewEl.innerHTML = layers
+      .map(function (layer, i) {
+        var src = layerImage(layer.kind, layer.option, layer.label, layer.color);
+        return '<img class="bc-layer" style="z-index:' + i + '" src="' + src + '" alt="' + layer.label.replace(/"/g, '&quot;') + '">';
+      })
+      .join('') + '<div class="bc-preview-placeholder-badge">Platzhalter-Vorschau – kein echtes Produktfoto</div>';
   };
 
   BoxspringConfigurator.prototype.renderActiveStepButton = function () {

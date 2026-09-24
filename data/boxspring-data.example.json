@@ -1,51 +1,58 @@
 {
-  "_comment": "PLATZHALTER-DATEN. Muss mit echten Mozart-Daten (Serien, Größen, Aufpreise, Bilder) ersetzt werden, sobald verfügbar. Struktur ist final gedacht, Werte nicht. MVP-Scope: nur Serien mit enabled:true werden im Konfigurator angezeigt (aktuell Serie 5 + 7). Serie 9 bleibt in den Daten, aber deaktiviert, bis sie freigegeben wird.",
-  "version": "0.0.2-placeholder",
+  "_comment": "PLATZHALTER-DATEN für die Marke Lieblingsbett. Muss mit echten Daten (Serien, Größen, Aufpreise, Bilder) ersetzt werden, sobald verfügbar. Struktur ist final gedacht, Werte/Namen nicht. MVP-Scope: nur Serien mit enabled:true werden im Konfigurator angezeigt (aktuell Basic + Comfort). Prestige bleibt in den Daten, aber deaktiviert, bis sie freigegeben wird.",
+  "version": "0.0.3-placeholder",
+  "brand": "Lieblingsbett",
   "currency": "EUR",
   "series": [
     {
-      "id": "serie5",
-      "name": "Serie 5",
+      "id": "basic",
+      "name": "Lieblingsbett Basic",
+      "badge": "Der Einstieg",
       "enabled": true,
-      "tagline": "Originaler Boxspring, 7-Zonen-Tonnentaschenfederkern",
+      "tagline": "Bequemer Boxspring-Komfort mit 7-Zonen-Taschenfederkern",
+      "previewSwatch": "#ece7df",
       "sizes": [
         { "id": "160x200", "width": 160, "length": 200, "basePrice": 1499 },
         { "id": "180x200", "width": 180, "length": 200, "basePrice": 1699 },
         { "id": "200x200", "width": 200, "length": 200, "basePrice": 1899 }
       ],
-      "compatibleHeadboards": ["salieri", "chopin"],
+      "compatibleHeadboards": ["lino", "vasto"],
       "compatibleBoxes": ["classic"],
       "compatibleFeet": ["wood_low", "wood_high", "metal_chrome"],
       "compatibleMattresses": ["standard_7zone"],
       "compatibleToppers": ["memory_4cm", "none"]
     },
     {
-      "id": "serie7",
-      "name": "Serie 7",
+      "id": "comfort",
+      "name": "Lieblingsbett Comfort",
+      "badge": "Unser Favorit",
       "enabled": true,
-      "tagline": "Ultimativer Komfort, doppelter Tonnentaschenfederkern",
+      "tagline": "Doppelter Taschenfederkern in Box & Matratze für spürbar mehr Komfort",
+      "previewSwatch": "#e3ddd0",
       "sizes": [
-        { "id": "160x200", "width": 160, "length": 200, "basePrice": 2199, "excludedHeadboards": ["mahler"] },
+        { "id": "160x200", "width": 160, "length": 200, "basePrice": 2199, "excludedHeadboards": ["aurora"] },
         { "id": "180x200", "width": 180, "length": 200, "basePrice": 2499 },
         { "id": "200x200", "width": 200, "length": 200, "basePrice": 2799 }
       ],
-      "_comment_excludedHeadboards": "Beispiel: Kopfteil 'Mahler' ist bei Serie 7 grundsätzlich erlaubt, aber bei 160x200 zu breit/nicht lieferbar -> pro Größe wieder ausgeschlossen.",
-      "compatibleHeadboards": ["salieri", "chopin", "mahler"],
+      "_comment_excludedHeadboards": "Beispiel: Kopfteil 'Aurora' ist bei Comfort grundsätzlich erlaubt, aber bei 160x200 nicht lieferbar -> pro Größe wieder ausgeschlossen.",
+      "compatibleHeadboards": ["lino", "vasto", "aurora"],
       "compatibleBoxes": ["classic", "premium"],
       "compatibleFeet": ["wood_low", "wood_high", "metal_chrome", "metal_black"],
       "compatibleMattresses": ["standard_7zone", "royal"],
       "compatibleToppers": ["memory_4cm", "memory_6cm", "none"]
     },
     {
-      "id": "serie9",
-      "name": "Serie 9",
+      "id": "prestige",
+      "name": "Lieblingsbett Prestige",
+      "badge": "Luxus Edition",
       "enabled": false,
-      "tagline": "Luxus Edition, TwinSpring-Technologie",
+      "tagline": "Unser hochwertigstes Bett mit Premium-Federkerntechnik",
+      "previewSwatch": "#d9d2c1",
       "sizes": [
         { "id": "180x200", "width": 180, "length": 200, "basePrice": 3299 },
         { "id": "200x200", "width": 200, "length": 200, "basePrice": 3599 }
       ],
-      "compatibleHeadboards": ["chopin", "mahler"],
+      "compatibleHeadboards": ["vasto", "aurora"],
       "compatibleBoxes": ["premium"],
       "compatibleFeet": ["metal_chrome", "metal_black"],
       "compatibleMattresses": ["royal"],
@@ -53,23 +60,23 @@
     }
   ],
   "headboards": [
-    { "id": "salieri", "name": "Salieri", "priceDelta": 0, "image": "" },
-    { "id": "chopin", "name": "Chopin", "priceDelta": 180, "image": "" },
-    { "id": "mahler", "name": "Mahler", "priceDelta": 320, "image": "" }
+    { "id": "lino", "name": "Lino", "priceDelta": 0, "previewImage": null },
+    { "id": "vasto", "name": "Vasto", "priceDelta": 180, "previewImage": null },
+    { "id": "aurora", "name": "Aurora", "priceDelta": 320, "previewImage": null }
   ],
   "fabrics": [
-    { "id": "fabric_basic_grau", "name": "Feiner Stoff – Grau", "group": "basic", "priceDelta": 0, "image": "" },
-    { "id": "fabric_bouclé_beige", "name": "Bouclé – Beige", "group": "bouclé", "priceDelta": 220, "image": "" }
+    { "id": "fabric_basic_grau", "name": "Feiner Stoff – Grau", "group": "basic", "priceDelta": 0, "swatchColor": "#9c9488", "previewImage": null },
+    { "id": "fabric_boucle_beige", "name": "Bouclé – Beige", "group": "bouclé", "priceDelta": 220, "swatchColor": "#cbb99a", "previewImage": null }
   ],
   "boxes": [
     { "id": "classic", "name": "Classic Box", "priceDelta": 0 },
     { "id": "premium", "name": "Premium Box", "priceDelta": 250 }
   ],
   "feet": [
-    { "id": "wood_low", "name": "Holzfuß niedrig", "priceDelta": 0 },
-    { "id": "wood_high", "name": "Holzfuß hoch", "priceDelta": 20 },
-    { "id": "metal_chrome", "name": "Metallfuß Chrom", "priceDelta": 40 },
-    { "id": "metal_black", "name": "Metallfuß Schwarz", "priceDelta": 40 }
+    { "id": "wood_low", "name": "Holzfuß niedrig", "priceDelta": 0, "previewImage": null },
+    { "id": "wood_high", "name": "Holzfuß hoch", "priceDelta": 20, "previewImage": null },
+    { "id": "metal_chrome", "name": "Metallfuß Chrom", "priceDelta": 40, "previewImage": null },
+    { "id": "metal_black", "name": "Metallfuß Schwarz", "priceDelta": 40, "previewImage": null }
   ],
   "mattresses": [
     { "id": "standard_7zone", "name": "7-Zonen Standard", "priceDelta": 0 },

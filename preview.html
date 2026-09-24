@@ -2,15 +2,17 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8" />
-<title>Boxspring-Konfigurator – Lokale Vorschau</title>
+<title>Lieblingsbett – Boxspring-Konfigurator (Lokale Vorschau)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="stylesheet" href="assets/boxspring-configurator.css?v=1" />
 <style>
   body { margin: 0; padding: 24px; background: #fafafa; font-family: -apple-system, sans-serif; }
+  .bc-brand { max-width: 1100px; margin: 0 auto 16px; font-size: 22px; font-weight: 700; letter-spacing: 0.02em; }
 </style>
 </head>
 <body>
 
+<div class="bc-brand" data-bc-brand>Lieblingsbett</div>
 <div class="boxspring-configurator" id="boxspring-configurator-preview">
   <div class="bc-steps" role="tablist" aria-label="Konfigurationsschritte"></div>
 
@@ -39,7 +41,7 @@
   </script>
 </div>
 
-<script src="assets/boxspring-configurator.js?v=4"></script>
+<script src="assets/boxspring-configurator.js?v=5"></script>
 <script>
   window.BoxspringConfiguratorOnAddToCart = function (payload) {
     alert('Vorschau: würde jetzt an Worker senden.\n\n' + JSON.stringify(payload, null, 2));
