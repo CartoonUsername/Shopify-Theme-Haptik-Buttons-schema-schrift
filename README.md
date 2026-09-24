@@ -64,6 +64,42 @@ python3 -m http.server 8123 --bind 127.0.0.1
 `preview.html` hat kein Shopify-Cache-Busting – `?v=` bei Assets von Hand
 hochzählen, wenn sich Dateien ändern und der Browser cached.
 
+## Swipebare Galerie + Aktionsleiste
+
+Die Vorschau ist jetzt eine swipebare Galerie mit mehreren "Aufnahmen" pro
+Konfiguration (`GALLERY_SLIDES` in `boxspring-configurator.js`), analog zu
+den Pfeilen/Punkten bei mozart-bett.de:
+
+- Pfeile links/rechts, Punkt-Indikatoren unten, Touch-Swipe auf Mobil (40px
+  Mindestbewegung).
+- Bis echte Fotoserien vorliegen, sind die "Aufnahmen" vier unterschiedliche
+  Zoom-/Pan-Ausschnitte derselben vier Ebenen (Übersicht, Kopfteil-Detail,
+  Stoff-Detail, Fuß-Detail) – rein CSS-Transform auf denselben Layern, keine
+  zusätzlichen Bilddateien nötig. Sobald echte Fotos da sind, kann man pro
+  Slide echte Bild-URLs statt der Zoom-Simulation einsetzen; die
+  Navigations-Logik (Pfeile/Punkte/Swipe/Reset) bleibt unverändert.
+- Wechselt Serie/Größe/Kopfteil/Stoff/Füße, springt die Galerie automatisch
+  zurück auf Bild 1 (neue Kombination = neuer erster Eindruck); reines
+  Navigieren innerhalb der Galerie löst dagegen keinen Neuaufbau der
+  Optionen/des Preises aus.
+
+Darunter eine Aktionsleiste mit drei Buttons, wie bei Mozart:
+
+- **Entwurf speichern**: kodiert die aktuelle Auswahl als `?bc-config=…`
+  in der URL und kopiert den Link (kein Login/Backend nötig). Wird die
+  Seite mit diesem Link erneut geöffnet, übernimmt `load()` die Auswahl
+  automatisch – per Headless-Browser getestet (Auswahl vor/nach Reload
+  identisch).
+- **Maße**: zeigt Liegefläche aus den aktuellen Daten; Gesamthöhe ist
+  bewusst als "wird ergänzt" markiert, da keine echten Produktmaße
+  vorliegen (keine erfundenen Werte).
+- **Gratis Stoffmuster**: reiner Platzhalter-Hinweis, dass der Ablauf noch
+  mit dem Shop-Betreiber zu klären ist (siehe Auftrag Abschnitt 4.6).
+
+Die Lieferzeit-Zeile links unten in der Vorschau kommt aus
+`series.deliveryText` und zeigt standardmäßig "wird nach Freigabe ergänzt"
+– es werden keine erfundenen Liefertermine angezeigt.
+
 ## Live-Bildvorschau (Ebenen-Compositing)
 
 Die Vorschau besteht aus vier übereinandergestapelten Bild-Ebenen

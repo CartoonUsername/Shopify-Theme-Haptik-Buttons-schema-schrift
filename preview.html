@@ -27,6 +27,8 @@
 
   <div class="bc-summary" data-bc-summary></div>
 
+  <div class="bc-actions" data-bc-actions></div>
+
   <button type="button" class="bc-add-to-cart" data-bc-add-to-cart>In den Warenkorb</button>
 
   <script type="application/json" data-bc-config>
@@ -41,7 +43,7 @@
   </script>
 </div>
 
-<script src="assets/boxspring-configurator.js?v=5"></script>
+<script src="assets/boxspring-configurator.js?v=6"></script>
 <script>
   window.BoxspringConfiguratorOnAddToCart = function (payload) {
     alert('Vorschau: würde jetzt an Worker senden.\n\n' + JSON.stringify(payload, null, 2));

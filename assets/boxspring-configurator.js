@@ -55,6 +55,19 @@
     extras: 'extras'
   };
 
+  // Swipebare "Fotos" pro Konfiguration. Bis echte Fotos vorliegen, sind das
+  // vier unterschiedliche Ausschnitte/Zooms derselben vier Ebenen (siehe
+  // renderPreview) – optisch wie mehrere Kamerawinkel, technisch dieselbe
+  // Komposition mit CSS-Transform. Später ersetzt man das 1:1 durch echte
+  // Fotoserien pro Kombination (gleiche Slide-Anzahl/Reihenfolge reicht,
+  // der Rest der Galerie-Logik bleibt unverändert).
+  var GALLERY_SLIDES = [
+    { id: 'overview', label: 'Übersicht', transform: 'scale(1) translate(0, 0)' },
+    { id: 'headboard', label: 'Kopfteil', transform: 'scale(1.7) translate(0, -14%)' },
+    { id: 'fabric', label: 'Stoff', transform: 'scale(1.9) translate(0, 6%)' },
+    { id: 'feet', label: 'Füße', transform: 'scale(2.4) translate(0, 22%)' }
+  ];
+
   // Welches Feld auf der Serie die erlaubten IDs für einen Schritt auflistet.
   // Fehlt das Feld auf der Serie, gilt der Schritt als uneingeschränkt.
   // 'size' und 'headboard' haben eigene Sonderbehandlung (siehe unten).
@@ -208,6 +221,9 @@
     this.data = null;
     this.selection = { extras: [] };
     this.step = STEP_ORDER[0];
+    this.slideIndex = 0;
+    this._previewFingerprint = null;
+    this._touchStartX = null;
 
     this.previewEl = root.querySelector('[data-bc-preview]');
     this.priceEl = root.querySelector('[data-bc-price]');
@@ -215,11 +231,42 @@
     this.summaryEl = root.querySelector('[data-bc-summary]');
     this.stepsEl = root.querySelector('.bc-steps');
     this.addToCartBtn = root.querySelector('[data-bc-add-to-cart]');
+    this.actionsEl = root.querySelector('[data-bc-actions]');
 
     this.addToCartBtn.addEventListener('click', this.onAddToCart.bind(this));
+    this.previewEl.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: true });
+    this.previewEl.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: true });
+    if (this.actionsEl) this.renderActions();
 
     this.load();
   }
+
+  // Swipe-Geste auf der Vorschau: nach links = nächstes Bild, nach rechts =
+  // vorheriges. 40px Mindestbewegung, damit ein Tap nicht als Swipe zählt.
+  BoxspringConfigurator.prototype.onTouchStart = function (e) {
+    this._touchStartX = e.changedTouches[0].clientX;
+  };
+
+  BoxspringConfigurator.prototype.onTouchEnd = function (e) {
+    if (this._touchStartX === null) return;
+    var dx = e.changedTouches[0].clientX - this._touchStartX;
+    this._touchStartX = null;
+    if (Math.abs(dx) < 40) return;
+    this.goToSlide(this.slideIndex + (dx < 0 ? 1 : -1));
+  };
+
+  // Wechselt das Gallerie-Bild, ohne die restliche Vorschau neu zu bauen
+  // (kein voller render() nötig – nur Transform + aktiver Punkt ändern sich).
+  BoxspringConfigurator.prototype.goToSlide = function (index) {
+    var n = GALLERY_SLIDES.length;
+    this.slideIndex = ((index % n) + n) % n;
+    var viewport = this.previewEl.querySelector('[data-bc-gallery-viewport]');
+    if (viewport) viewport.style.transform = GALLERY_SLIDES[this.slideIndex].transform;
+    var self = this;
+    this.previewEl.querySelectorAll('[data-bc-dot]').forEach(function (dot, i) {
+      dot.classList.toggle('is-active', i === self.slideIndex);
+    });
+  };
 
   BoxspringConfigurator.prototype.load = function () {
     var self = this;
@@ -243,6 +290,33 @@
         var series = findById(data.series, self.selection.series);
         self.selection.size = series && series.sizes[0] && series.sizes[0].id;
         self.selection.fabric = data.fabrics[0] && data.fabrics[0].id;
+
+        // Gespeicherten Entwurf aus der URL übernehmen (siehe saveDraft()),
+        // falls vorhanden und die Serie darin noch existiert/aktiv ist.
+        // Unbekannte/ungültige Felder werden von reconcileSelection()
+        // direkt danach ohnehin auf eine gültige Option korrigiert.
+        try {
+          var params = new URLSearchParams(window.location.search);
+          var raw = params.get('bc-config');
+          if (raw) {
+            var saved = JSON.parse(raw);
+            if (saved && typeof saved === 'object') {
+              Object.keys(saved).forEach(function (key) {
+                self.selection[key] = saved[key];
+              });
+              if (!Array.isArray(self.selection.extras)) self.selection.extras = [];
+              // Serie im gespeicherten Entwurf existiert nicht (mehr) oder
+              // ist deaktiviert (z. B. Prestige im MVP) -> auf erste Serie
+              // zurückfallen statt in einem ungültigen Zustand zu landen.
+              if (!findById(data.series, self.selection.series)) {
+                self.selection.series = data.series[0] && data.series[0].id;
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('[BoxspringConfigurator] Gespeicherter Entwurf in der URL konnte nicht gelesen werden.', e);
+        }
+
         self.reconcileSelection();
         self.renderSteps();
         self.render();
@@ -282,17 +356,28 @@
     this.renderSummary();
   };
 
-  // Baut die Live-Vorschau aus vier übereinanderliegenden Ebenen (Basis-
-  // Szene je Serie/Größe, Kopfteil, Stoff-Farbe, Füße). Läuft bei *jeder*
-  // Auswahländerung, egal welcher Schritt gerade aktiv ist – Kopfteil-
-  // Wechsel ändert also sofort das Bild, auch während man z. B. gerade im
-  // Extras-Schritt ist.
+  // Baut die Live-Vorschau als swipebare Galerie aus vier übereinander-
+  // liegenden Bild-Ebenen (Basis-Szene je Serie/Größe, Kopfteil, Stoff-
+  // Farbe, Füße) plus mehreren "Aufnahmen" (siehe GALLERY_SLIDES) davon.
+  // Läuft bei *jeder* Auswahländerung, egal welcher Schritt gerade aktiv
+  // ist – ein Kopfteil-Wechsel ändert also sofort das Bild, auch während
+  // man z. B. gerade im Extras-Schritt ist. Das aktuelle Slide (welcher
+  // "Kamerawinkel") bleibt dabei erhalten, solange sich Serie/Größe/
+  // Kopfteil/Stoff/Füße nicht ändern – erst dann springt die Galerie
+  // zurück auf die Übersicht.
   BoxspringConfigurator.prototype.renderPreview = function () {
+    var self = this;
     var series = this.currentSeries();
     var size = series && findById(series.sizes, this.selection.size);
     var headboard = findById(this.data.headboards, this.selection.headboard);
     var fabric = findById(this.data.fabrics, this.selection.fabric);
     var feet = findById(this.data.feet, this.selection.feet);
+
+    var fingerprint = [this.selection.series, this.selection.size, this.selection.headboard, this.selection.fabric, this.selection.feet].join('|');
+    if (fingerprint !== this._previewFingerprint) {
+      this.slideIndex = 0;
+      this._previewFingerprint = fingerprint;
+    }
 
     var sizeLabel = size ? size.width + ' × ' + size.length + ' cm' : '';
     var seriesLabel = (series ? series.name : this.data.brand || 'Bett') + (sizeLabel ? ' · ' + sizeLabel : '');
@@ -304,12 +389,89 @@
       { kind: 'feet', option: feet, label: '', color: '#4a463d' }
     ];
 
-    this.previewEl.innerHTML = layers
+    var layersHtml = layers
       .map(function (layer, i) {
         var src = layerImage(layer.kind, layer.option, layer.label, layer.color);
         return '<img class="bc-layer" style="z-index:' + i + '" src="' + src + '" alt="' + layer.label.replace(/"/g, '&quot;') + '">';
       })
-      .join('') + '<div class="bc-preview-placeholder-badge">Platzhalter-Vorschau – kein echtes Produktfoto</div>';
+      .join('');
+
+    var dotsHtml = GALLERY_SLIDES
+      .map(function (slide, i) {
+        return '<button type="button" class="bc-gallery-dot' + (i === self.slideIndex ? ' is-active' : '') + '" data-bc-dot="' + i + '" aria-label="' + slide.label + '"></button>';
+      })
+      .join('');
+
+    var deliveryText = (series && series.deliveryText) || 'Lieferzeit: wird nach Freigabe ergänzt';
+
+    this.previewEl.innerHTML =
+      '<div class="bc-gallery-viewport" data-bc-gallery-viewport style="transform:' + GALLERY_SLIDES[this.slideIndex].transform + '">' + layersHtml + '</div>' +
+      '<button type="button" class="bc-gallery-arrow bc-gallery-prev" data-bc-prev aria-label="Vorheriges Bild">‹</button>' +
+      '<button type="button" class="bc-gallery-arrow bc-gallery-next" data-bc-next aria-label="Nächstes Bild">›</button>' +
+      '<div class="bc-gallery-dots">' + dotsHtml + '</div>' +
+      '<div class="bc-preview-delivery">' + deliveryText + '</div>' +
+      '<div class="bc-preview-placeholder-badge">Platzhalter-Vorschau – kein echtes Produktfoto</div>';
+
+    this.previewEl.querySelector('[data-bc-prev]').addEventListener('click', function () {
+      self.goToSlide(self.slideIndex - 1);
+    });
+    this.previewEl.querySelector('[data-bc-next]').addEventListener('click', function () {
+      self.goToSlide(self.slideIndex + 1);
+    });
+    this.previewEl.querySelectorAll('[data-bc-dot]').forEach(function (dot) {
+      dot.addEventListener('click', function () {
+        self.goToSlide(parseInt(dot.dataset.bcDot, 10));
+      });
+    });
+  };
+
+  // Untere Aktionsleiste (Entwurf speichern / Maße / Gratis Stoffmuster),
+  // wird einmalig gerendert (unabhängig von Auswahländerungen).
+  BoxspringConfigurator.prototype.renderActions = function () {
+    var self = this;
+    this.actionsEl.innerHTML =
+      '<button type="button" class="bc-action-btn" data-bc-action="save">💾 Entwurf speichern</button>' +
+      '<button type="button" class="bc-action-btn" data-bc-action="dimensions">📐 Maße</button>' +
+      '<button type="button" class="bc-action-btn" data-bc-action="sample">🧵 Gratis Stoffmuster</button>';
+
+    this.actionsEl.querySelector('[data-bc-action="save"]').addEventListener('click', function () {
+      self.saveDraft();
+    });
+    this.actionsEl.querySelector('[data-bc-action="dimensions"]').addEventListener('click', function () {
+      self.showDimensions();
+    });
+    this.actionsEl.querySelector('[data-bc-action="sample"]').addEventListener('click', function () {
+      alert('Gratis Stoffmuster: Ablauf (eigenes Produkt/Formular?) ist mit dem Shop-Betreiber noch zu klären – hier nur Platzhalter.');
+    });
+  };
+
+  // "Entwurf speichern": kodiert die aktuelle Auswahl als URL-Parameter
+  // und kopiert den Link in die Zwischenablage (kein Login/Backend nötig).
+  // Beim Laden mit ?bc-config=... wird die Auswahl in load() übernommen.
+  BoxspringConfigurator.prototype.saveDraft = function () {
+    var url = new URL(window.location.href);
+    url.searchParams.set('bc-config', JSON.stringify(this.selection));
+    var link = url.toString();
+
+    var done = function (ok) {
+      alert(ok ? 'Link kopiert! Damit lässt sich diese Konfiguration später wieder öffnen:\n\n' + link : link);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link).then(function () { done(true); }, function () { done(false); });
+    } else {
+      done(false);
+    }
+  };
+
+  BoxspringConfigurator.prototype.showDimensions = function () {
+    var series = this.currentSeries();
+    var size = series && findById(series.sizes, this.selection.size);
+    if (!size) { alert('Bitte zuerst Serie und Größe wählen.'); return; }
+    alert(
+      'Maße (Liegefläche): ' + size.width + ' × ' + size.length + ' cm\n' +
+      'Höhe: wird ergänzt (Box + Matratze + Topper je nach Auswahl)\n' +
+      '\nGenaue Gesamthöhe folgt, sobald reale Produktmaße vorliegen.'
+    );
   };
 
   BoxspringConfigurator.prototype.renderActiveStepButton = function () {
