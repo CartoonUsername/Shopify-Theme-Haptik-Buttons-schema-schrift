@@ -7,6 +7,10 @@ Cloudflare-Worker für den Checkout mit korrektem Preis.
 
 ## Status
 
+**MVP-Scope: nur Serie 5 + 7.** Serie 9 ist in den Daten vorhanden
+(`enabled: false`) und wird vom Konfigurator ausgeblendet, bis sie
+freigegeben wird. Zum Aktivieren einfach `enabled: true` setzen.
+
 **Gerüst, keine echten Mozart-Daten.** In dieser Session war `mozart-bett.de`
 über den Netzwerk-Proxy nicht erreichbar und es gab keinen Zugriff auf das
 bisherige Plissee-Projekt (anderes Repo/andere Session). Alle Serien,

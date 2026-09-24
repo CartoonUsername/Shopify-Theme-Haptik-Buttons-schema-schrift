@@ -1,11 +1,12 @@
 {
-  "_comment": "PLATZHALTER-DATEN. Muss mit echten Mozart-Daten (Serien, Größen, Aufpreise, Bilder) ersetzt werden, sobald verfügbar. Struktur ist final gedacht, Werte nicht.",
-  "version": "0.0.1-placeholder",
+  "_comment": "PLATZHALTER-DATEN. Muss mit echten Mozart-Daten (Serien, Größen, Aufpreise, Bilder) ersetzt werden, sobald verfügbar. Struktur ist final gedacht, Werte nicht. MVP-Scope: nur Serien mit enabled:true werden im Konfigurator angezeigt (aktuell Serie 5 + 7). Serie 9 bleibt in den Daten, aber deaktiviert, bis sie freigegeben wird.",
+  "version": "0.0.2-placeholder",
   "currency": "EUR",
   "series": [
     {
       "id": "serie5",
       "name": "Serie 5",
+      "enabled": true,
       "tagline": "Originaler Boxspring, 7-Zonen-Tonnentaschenfederkern",
       "sizes": [
         { "id": "160x200", "width": 160, "length": 200, "basePrice": 1499 },
@@ -21,6 +22,7 @@
     {
       "id": "serie7",
       "name": "Serie 7",
+      "enabled": true,
       "tagline": "Ultimativer Komfort, doppelter Tonnentaschenfederkern",
       "sizes": [
         { "id": "160x200", "width": 160, "length": 200, "basePrice": 2199 },
@@ -36,6 +38,7 @@
     {
       "id": "serie9",
       "name": "Serie 9",
+      "enabled": false,
       "tagline": "Luxus Edition, TwinSpring-Technologie",
       "sizes": [
         { "id": "180x200", "width": 180, "length": 200, "basePrice": 3299 },

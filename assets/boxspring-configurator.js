@@ -113,6 +113,12 @@
       })
       .then(function (data) {
         self.data = data;
+        // MVP-Scope: nur Serien mit enabled:true (aktuell Serie 5 + 7).
+        // Serie 9 bleibt in den Daten, wird aber ausgeblendet, bis sie
+        // freigegeben wird.
+        data.series = data.series.filter(function (s) {
+          return s.enabled !== false;
+        });
         // Sinnvolle Startauswahl: erste Serie, erste Größe.
         self.selection.series = data.series[0] && data.series[0].id;
         var series = findById(data.series, self.selection.series);
