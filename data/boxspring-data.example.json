@@ -25,10 +25,11 @@
       "enabled": true,
       "tagline": "Ultimativer Komfort, doppelter Tonnentaschenfederkern",
       "sizes": [
-        { "id": "160x200", "width": 160, "length": 200, "basePrice": 2199 },
+        { "id": "160x200", "width": 160, "length": 200, "basePrice": 2199, "excludedHeadboards": ["mahler"] },
         { "id": "180x200", "width": 180, "length": 200, "basePrice": 2499 },
         { "id": "200x200", "width": 200, "length": 200, "basePrice": 2799 }
       ],
+      "_comment_excludedHeadboards": "Beispiel: Kopfteil 'Mahler' ist bei Serie 7 grundsätzlich erlaubt, aber bei 160x200 zu breit/nicht lieferbar -> pro Größe wieder ausgeschlossen.",
       "compatibleHeadboards": ["salieri", "chopin", "mahler"],
       "compatibleBoxes": ["classic", "premium"],
       "compatibleFeet": ["wood_low", "wood_high", "metal_chrome", "metal_black"],

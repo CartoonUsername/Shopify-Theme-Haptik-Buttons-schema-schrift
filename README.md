@@ -78,6 +78,35 @@ hochzählen, wenn sich Dateien ändern und der Browser cached.
 7. Rechtliche Klärung Streichpreis/Rabattdarstellung, Versandkosten,
    Lieferzeit-Texte (siehe Auftrag Abschnitt 4.5–4.7).
 
+## Kompatibilitätslogik (Serie / Größe / Kopfteil / Box / Füße / Matratze / Topper)
+
+Jede Serie definiert in den Daten, welche Kopfteile/Boxen/Füße/Matratzen/
+Topper zu ihr passen (`compatibleHeadboards`, `compatibleBoxes`, …). Beim
+Kopfteil gibt es zusätzlich eine zweite, feinere Ebene: eine einzelne Größe
+kann per `excludedHeadboards` ein Kopfteil wieder ausschließen, das die
+Serie grundsätzlich führt (Beispiel in `boxspring-data.example.json`: Serie 7
+führt "Mahler", aber nicht bei 160×200).
+
+Regeln:
+
+- Wechselt die Serie oder die Größe, prüft `reconcileSelection()` **alle**
+  abhängigen Auswahlen neu (Größe, Kopfteil, Box, Füße, Matratze, Topper).
+  Eine ungültig gewordene Auswahl springt automatisch auf die erste noch
+  kompatible Option – nie auf "nichts ausgewählt", damit der Preis immer
+  vollständig bleibt.
+- Fehlt ein `compatible*`-Feld auf der Serie, gilt der jeweilige Schritt als
+  uneingeschränkt (z. B. Stoffe/Extras sind aktuell serienunabhängig).
+- Getestet mit Headless Chromium: Serie 5 zeigt nur "Classic Box" und kein
+  "Mahler"-Kopfteil; Serie 7 verliert "Mahler" bei 160×200 und bekommt es
+  bei 200×200 zurück; Wahl von "Mahler" gefolgt von Rücksprung auf 160×200
+  springt automatisch auf "Salieri" statt leer zu bleiben.
+- **Wichtig für später:** Sobald der Cloudflare Worker existiert, muss er
+  dieselbe Kompatibilitätsprüfung serverseitig wiederholen (nie nur dem
+  Client vertrauen) – die Funktionen `isHeadboardCompatible`,
+  `isOptionCompatible`, `filterCompatible` sind über
+  `window.BoxspringConfiguratorPricing` exportiert, damit ein Paritätstest
+  Theme-JS und Worker gegeneinander prüfen kann.
+
 ## Preisformel (aktueller Stand, Platzhalter-Daten)
 
 ```

@@ -43,6 +43,28 @@
     extras: 'Extras'
   };
 
+  // Welcher Schlüssel in data.* die Optionsliste für einen Schritt hält.
+  var STEP_DATA_KEY = {
+    series: 'series',
+    headboard: 'headboards',
+    fabric: 'fabrics',
+    box: 'boxes',
+    feet: 'feet',
+    mattress: 'mattresses',
+    topper: 'toppers',
+    extras: 'extras'
+  };
+
+  // Welches Feld auf der Serie die erlaubten IDs für einen Schritt auflistet.
+  // Fehlt das Feld auf der Serie, gilt der Schritt als uneingeschränkt.
+  // 'size' und 'headboard' haben eigene Sonderbehandlung (siehe unten).
+  var SERIES_COMPAT_KEY = {
+    box: 'compatibleBoxes',
+    feet: 'compatibleFeet',
+    mattress: 'compatibleMattresses',
+    topper: 'compatibleToppers'
+  };
+
   function computeUnitPrice(data, selection) {
     var series = findById(data.series, selection.series);
     if (!series) return null;
@@ -86,8 +108,46 @@
     return null;
   }
 
-  function isHeadboardCompatible(series, headboardId) {
-    return !series.compatibleHeadboards || series.compatibleHeadboards.indexOf(headboardId) !== -1;
+  // Kopfteil-Kompatibilität hat zwei Ebenen: (1) grundsätzlich erlaubt für
+  // die Serie (series.compatibleHeadboards), (2) optional pro Größe wieder
+  // ausgeschlossen (size.excludedHeadboards), z. B. weil ein Kopfteil bei
+  // einer sehr schmalen Breite nicht angeboten wird, obwohl die Serie es
+  // grundsätzlich führt. Beide Felder sind optional; fehlen sie, gilt keine
+  // Einschränkung auf dieser Ebene.
+  function isHeadboardCompatible(series, headboardId, sizeId) {
+    if (!series) return true;
+    if (series.compatibleHeadboards && series.compatibleHeadboards.indexOf(headboardId) === -1) {
+      return false;
+    }
+    var size = sizeId ? findById(series.sizes, sizeId) : null;
+    if (size && size.excludedHeadboards && size.excludedHeadboards.indexOf(headboardId) !== -1) {
+      return false;
+    }
+    return true;
+  }
+
+  // Generische Serie-Kompatibilität für Box/Füße/Matratze/Topper.
+  function isOptionCompatible(series, step, optionId) {
+    var key = SERIES_COMPAT_KEY[step];
+    if (!series || !key || !series[key]) return true; // keine Einschränkung definiert
+    return series[key].indexOf(optionId) !== -1;
+  }
+
+  // Liefert aus einer vollen Optionsliste nur die für die aktuelle
+  // Serie/Größe kompatiblen Einträge. Für Schritte ohne Kompatibilitäts-
+  // regeln (fabric, extras) kommt die volle Liste unverändert zurück.
+  function filterCompatible(series, step, list, sizeId) {
+    if (step === 'headboard') {
+      return list.filter(function (o) {
+        return isHeadboardCompatible(series, o.id, sizeId);
+      });
+    }
+    if (SERIES_COMPAT_KEY[step]) {
+      return list.filter(function (o) {
+        return isOptionCompatible(series, step, o.id);
+      });
+    }
+    return list;
   }
 
   function BoxspringConfigurator(root) {
@@ -125,19 +185,14 @@
         data.series = data.series.filter(function (s) {
           return s.enabled !== false;
         });
-        // Sinnvolle Startauswahl: erste Serie, erste Größe.
+        // Sinnvolle Startauswahl: erste Serie, erste Größe, dann alle
+        // abhängigen Optionen über reconcileSelection() auf die erste
+        // jeweils kompatible Option setzen.
         self.selection.series = data.series[0] && data.series[0].id;
         var series = findById(data.series, self.selection.series);
         self.selection.size = series && series.sizes[0] && series.sizes[0].id;
-        var firstHeadboard = data.headboards.filter(function (h) {
-          return !series || isHeadboardCompatible(series, h.id);
-        })[0];
-        self.selection.headboard = firstHeadboard && firstHeadboard.id;
         self.selection.fabric = data.fabrics[0] && data.fabrics[0].id;
-        self.selection.box = data.boxes[0] && data.boxes[0].id;
-        self.selection.feet = data.feet[0] && data.feet[0].id;
-        self.selection.mattress = data.mattresses[0] && data.mattresses[0].id;
-        self.selection.topper = data.toppers[0] && data.toppers[0].id;
+        self.reconcileSelection();
         self.renderSteps();
         self.render();
       })
@@ -187,21 +242,15 @@
     var series = this.currentSeries();
     this.optionsEl.innerHTML = '';
 
-    var listMap = {
-      series: this.data.series,
-      size: series ? series.sizes : [],
-      headboard: this.data.headboards.filter(function (h) {
-        return !series || isHeadboardCompatible(series, h.id);
-      }),
-      fabric: this.data.fabrics,
-      box: this.data.boxes,
-      feet: this.data.feet,
-      mattress: this.data.mattresses,
-      topper: this.data.toppers,
-      extras: this.data.extras
-    };
-
-    var list = listMap[this.step] || [];
+    var list;
+    if (this.step === 'series') {
+      list = this.data.series;
+    } else if (this.step === 'size') {
+      list = series ? series.sizes : [];
+    } else {
+      var fullList = this.data[STEP_DATA_KEY[this.step]] || [];
+      list = filterCompatible(series, this.step, fullList, this.selection.size);
+    }
     var isMulti = this.step === 'extras';
 
     list.forEach(function (option) {
@@ -243,23 +292,37 @@
     } else {
       this.selection[step] = id;
 
-      if (step === 'series') {
-        // Größe und Kopfteil an neue Serie anpassen, falls inkompatibel.
-        var series = this.currentSeries();
-        if (series) {
-          if (!findById(series.sizes, this.selection.size)) {
-            this.selection.size = series.sizes[0] && series.sizes[0].id;
-          }
-          if (!isHeadboardCompatible(series, this.selection.headboard)) {
-            var firstCompatible = this.data.headboards.filter(function (h) {
-              return isHeadboardCompatible(series, h.id);
-            })[0];
-            this.selection.headboard = firstCompatible && firstCompatible.id;
-          }
-        }
+      // Serie oder Größe beeinflussen, was bei allen anderen Schritten
+      // überhaupt wählbar ist (Kopfteil hängt von beidem ab; Box/Füße/
+      // Matratze/Topper hängen von der Serie ab) – nach jeder Änderung
+      // hier alle abhängigen Auswahlen neu abgleichen.
+      if (step === 'series' || step === 'size') {
+        this.reconcileSelection();
       }
     }
     this.render();
+  };
+
+  // Stellt sicher, dass jede aktuell gewählte Option zur Serie/Größe passt.
+  // Wird eine Auswahl durch einen Serien- oder Größenwechsel ungültig,
+  // springt sie auf die erste noch kompatible Option – nie auf "nichts
+  // ausgewählt", damit der Preis immer vollständig und korrekt bleibt.
+  BoxspringConfigurator.prototype.reconcileSelection = function () {
+    var self = this;
+    var series = this.currentSeries();
+    if (!series) return;
+
+    if (!findById(series.sizes, this.selection.size)) {
+      this.selection.size = series.sizes[0] && series.sizes[0].id;
+    }
+
+    ['headboard', 'box', 'feet', 'mattress', 'topper'].forEach(function (step) {
+      var fullList = self.data[STEP_DATA_KEY[step]] || [];
+      var compatible = filterCompatible(series, step, fullList, self.selection.size);
+      if (!findById(compatible, self.selection[step])) {
+        self.selection[step] = compatible[0] && compatible[0].id;
+      }
+    });
   };
 
   BoxspringConfigurator.prototype.renderPrice = function () {
@@ -280,14 +343,7 @@
           .join(', ');
         return STEP_LABELS.extras + ': ' + (names || '—');
       }
-      var list = step === 'series' ? self.data.series
-        : step === 'size' ? (series ? series.sizes : [])
-        : step === 'headboard' ? self.data.headboards
-        : step === 'fabric' ? self.data.fabrics
-        : step === 'box' ? self.data.boxes
-        : step === 'feet' ? self.data.feet
-        : step === 'mattress' ? self.data.mattresses
-        : self.data.toppers;
+      var list = step === 'size' ? (series ? series.sizes : []) : self.data[STEP_DATA_KEY[step]];
       var opt = findById(list, self.selection[step]);
       return STEP_LABELS[step] + ': ' + (optionLabel(step, opt) || '—');
     });
@@ -338,6 +394,13 @@
     init();
   }
 
-  // Für Tests/Worker-Parität exportieren.
-  window.BoxspringConfiguratorPricing = { computeUnitPrice: computeUnitPrice };
+  // Für Tests/Worker-Parität exportieren. Der Worker muss computeUnitPrice
+  // UND die Kompatibilitätsprüfungen 1:1 nachbauen, sonst kann ein Client
+  // eine eigentlich unzulässige Kombination einschicken.
+  window.BoxspringConfiguratorPricing = {
+    computeUnitPrice: computeUnitPrice,
+    isHeadboardCompatible: isHeadboardCompatible,
+    isOptionCompatible: isOptionCompatible,
+    filterCompatible: filterCompatible
+  };
 })();
