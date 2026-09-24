@@ -72,6 +72,12 @@
     return opt ? opt.priceDelta || 0 : 0;
   }
 
+  function optionLabel(step, option) {
+    if (!option) return null;
+    if (step === 'size') return option.width + ' × ' + option.length + ' cm';
+    return option.name;
+  }
+
   function findById(list, id) {
     if (!list) return null;
     for (var i = 0; i < list.length; i++) {
@@ -123,6 +129,11 @@
         self.selection.series = data.series[0] && data.series[0].id;
         var series = findById(data.series, self.selection.series);
         self.selection.size = series && series.sizes[0] && series.sizes[0].id;
+        var firstHeadboard = data.headboards.filter(function (h) {
+          return !series || isHeadboardCompatible(series, h.id);
+        })[0];
+        self.selection.headboard = firstHeadboard && firstHeadboard.id;
+        self.selection.fabric = data.fabrics[0] && data.fabrics[0].id;
         self.selection.box = data.boxes[0] && data.boxes[0].id;
         self.selection.feet = data.feet[0] && data.feet[0].id;
         self.selection.mattress = data.mattresses[0] && data.mattresses[0].id;
@@ -213,7 +224,7 @@
       if (self.step === 'size') priceLabel = option.basePrice + ' €';
 
       card.innerHTML =
-        '<span class="bc-option-name">' + option.name + '</span>' +
+        '<span class="bc-option-name">' + optionLabel(self.step, option) + '</span>' +
         (priceLabel ? '<span class="bc-option-price">' + priceLabel + '</span>' : '');
 
       card.addEventListener('click', function () {
@@ -240,7 +251,10 @@
             this.selection.size = series.sizes[0] && series.sizes[0].id;
           }
           if (!isHeadboardCompatible(series, this.selection.headboard)) {
-            this.selection.headboard = null;
+            var firstCompatible = this.data.headboards.filter(function (h) {
+              return isHeadboardCompatible(series, h.id);
+            })[0];
+            this.selection.headboard = firstCompatible && firstCompatible.id;
           }
         }
       }
@@ -275,7 +289,7 @@
         : step === 'mattress' ? self.data.mattresses
         : self.data.toppers;
       var opt = findById(list, self.selection[step]);
-      return STEP_LABELS[step] + ': ' + (opt ? opt.name : '—');
+      return STEP_LABELS[step] + ': ' + (optionLabel(step, opt) || '—');
     });
     this.summaryEl.innerHTML = lines.map(function (l) { return '<div>' + l + '</div>'; }).join('');
   };
