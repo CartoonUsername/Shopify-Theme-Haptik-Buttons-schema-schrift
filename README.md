@@ -100,32 +100,47 @@ Die Lieferzeit-Zeile links unten in der Vorschau kommt aus
 `series.deliveryText` und zeigt standardmäßig "wird nach Freigabe ergänzt"
 – es werden keine erfundenen Liefertermine angezeigt.
 
-## Live-Bildvorschau (Ebenen-Compositing)
+## Live-Bildvorschau: modularer Bett-Baukasten
 
-Die Vorschau besteht aus vier übereinandergestapelten Bild-Ebenen
-(`renderPreview()` in `boxspring-configurator.js`), die bei **jeder**
-Auswahländerung sofort neu zusammengesetzt werden:
+Die Vorschau ist eine einzige generierte SVG-Illustration
+(`buildBedIllustration()` in `boxspring-configurator.js`), die bei **jeder**
+Auswahländerung komplett neu zusammengesetzt wird – aus austauschbaren
+Bausteinen statt festen Bildern:
 
-1. **Basis** – Serie + Größe (Hintergrundfarbe + Bett-Silhouette)
-2. **Kopfteil** – je nach gewähltem Kopfteil
-3. **Stoff/Farbe** – Farbton über die Box-/Matratzenfläche gelegt
-4. **Füße** – je nach gewählter Fuß-Variante
+- **Kopfteil**: Form kommt aus `headboards[].shape` (`panel`/`channel`/
+  `wing`, Registry `HEADBOARD_SHAPES`), Farbe aus dem gewählten Stoff.
+- **Box**: immer im selben Stoff wie das Kopfteil (wie bei einem echten
+  Boxspringbett – beide sind gepolstert).
+- **Matratze**: weiß mit angedeuteten Steppnähten; **Topper** legt sich
+  bei Auswahl (≠ "Kein Topper") als zusätzliche Schicht obendrauf.
+- **Füße**: Form + Farbe + Länge kommen aus `feet[].shape` /
+  `swatchColor` / `footLength` (Registry `FEET_SHAPES`, aktuell `peg` für
+  Holz, `cylinder` für Metall).
+- **Extras**: sichtbar im Bild, wenn das Extra ein `visual`-Feld trägt
+  (Registry `EXTRA_VISUALS`, aktuell `usbIcon` und `ledGlow`) – ein Extra
+  ohne bekanntes `visual` bleibt nur in Preis/Zusammenfassung sichtbar.
 
-Solange kein echtes Foto vorliegt, generiert `placeholderLayerSvg()` pro
-Ebene ein einfaches SVG (Form + Beschriftung, transparenter Hintergrund)
-als Platzhalter – deutlich als "Platzhalter-Vorschau – kein echtes
-Produktfoto" gekennzeichnet, damit niemand das für ein finales Bild hält.
+**Das ist der Kern der Modularität:** Ein neues Kopfteil, ein neuer Fuß
+oder ein neues Extra in `boxspring-data.example.json` taucht automatisch
+im Bild auf, sobald es eine der vorhandenen Formen/Visuals referenziert –
+ohne dass `boxspring-configurator.js` angefasst werden muss. Referenziert
+es keine bekannte Form, greift ein neutraler Standard (`panel`/`peg`/keine
+Extra-Visualisierung), es gibt also nie einen kaputten Zustand.
 
-**So kommen später echte Fotos rein, ohne den Code anzufassen:** Jede
-Option (Kopfteil, Stoff, Füße, Serie) kann optional ein `previewImage`-Feld
-mit einer Bild-URL bekommen (siehe `layerImage()`) – ist das Feld gesetzt,
-wird automatisch das echte Foto statt des Platzhalters gerendert. Bilder
-sollten dafür transparenten Hintergrund haben und auf ein einheitliches
-800×600-Raster passen, damit die Ebenen sauber übereinanderliegen (analog
-zum in der Auftragsbeschreibung erwähnten Layer-Compositing-Ansatz).
+Es ist bewusst eine **eigene, einfache geometrische Illustration** (kein
+Nachbau eines echten Fotos irgendeines Anbieters) und durchgehend als
+"Platzhalter-Vorschau – kein echtes Produktfoto" gekennzeichnet.
 
-Getestet mit Headless Chromium: Kopfteil-, Stoff- und Serienwechsel ändern
-die Vorschau sofort, Preis und Zusammenfassung bleiben synchron.
+**So kommen später echte Fotos rein:** `buildBedIllustration()` wird durch
+eine Auflösung echter Foto-URLs pro Slide/Kombination ersetzt (siehe
+Galerie-Abschnitt oben) – die Navigations-Logik (Pfeile/Punkte/Swipe/
+Reset) und die Preis-/Kompatibilitätslogik bleiben davon unberührt.
+
+Getestet mit Headless Chromium: Kopfteil-Form (panel/channel/wing),
+Fuß-Form/-Farbe (Holz/Metall), Topper-Schicht und beide Extra-Visuals
+(USB-Badge, LED-Glow) erscheinen korrekt im Bild, Preis bleibt exakt
+synchron (z. B. Comfort/200×200/Aurora/Metallfuß Schwarz/Topper 6cm/
+USB+LED = 3.487,00 €, rechnerisch nachvollzogen).
 
 ## Was noch fehlt, bevor das produktiv nutzbar ist
 

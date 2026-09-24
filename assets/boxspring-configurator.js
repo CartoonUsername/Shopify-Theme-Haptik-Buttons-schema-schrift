@@ -107,55 +107,139 @@
     return opt ? opt.priceDelta || 0 : 0;
   }
 
-  /**
-   * Erzeugt eine reine Platzhalter-Ebene als Daten-URI-SVG (transparenter
-   * Hintergrund, eine einfache Form + Label) für einen Vorschau-Layer, für
-   * den noch kein echtes Foto vorliegt. Kind bestimmt Form/Position, damit
-   * mehrere Ebenen übereinander optisch als "Bett" lesbar bleiben.
-   *
-   * WICHTIG: Das ist bewusst *kein* echtes Produktfoto und darf nie als
-   * eines präsentiert werden. Sobald echte, freigegebene Fotos vorliegen,
-   * ersetzt man pro Option einfach previewImage (URL, transparenter
-   * Hintergrund, gleiches 800×600-Raster) in den Daten – der Renderer hier
-   * bleibt unverändert, siehe layerImage().
-   */
-  function placeholderLayerSvg(kind, label, color) {
-    var w = 800, h = 600;
-    var shape = '';
-    var labelX = 16, labelY = 24, anchor = 'start';
-    color = color || '#c9c2b2';
+  // ---------------------------------------------------------------------
+  // Modulares Bett-Baukasten-SVG (eigene, generische Illustration – kein
+  // Nachbau eines echten Produktfotos). Jedes Teil (Kopfteil-Form, Füße-
+  // Form, Extra-Badges) kommt aus einer kleinen Registry, die per `shape`/
+  // `visual`-Feld aus den Daten ausgewählt wird. Neue Kopfteile/Füße/Extras
+  // in boxspring-data.json bekommen automatisch eine passende Darstellung,
+  // ohne dass dieser Code angefasst werden muss – solange sie eine der
+  // vorhandenen Formen referenzieren (oder den Standardfall nutzen).
+  //
+  // WICHTIG: Das ist bewusst *keine* Fotomontage und darf nie als echtes
+  // Produktfoto präsentiert werden ("Platzhalter-Vorschau"-Badge bleibt
+  // sichtbar). Sobald lizenzierte Fotos vorliegen, ersetzt man
+  // buildBedIllustration() durch eine Foto-URL-Auflösung pro Slide/
+  // Kombination; die Galerie-Navigation (Pfeile/Punkte/Swipe) bleibt
+  // unverändert, siehe GALLERY_SLIDES weiter unten.
+  // ---------------------------------------------------------------------
 
-    if (kind === 'base') {
-      shape =
-        '<rect x="0" y="0" width="' + w + '" height="' + h + '" fill="' + color + '"/>' +
-        '<rect x="120" y="260" width="560" height="260" rx="24" fill="#ffffff" fill-opacity="0.55"/>';
-    } else if (kind === 'headboard') {
-      shape = '<rect x="140" y="60" width="520" height="180" rx="16" fill="' + color + '"/>';
-      labelY = 260;
-    } else if (kind === 'fabric') {
-      shape = '<rect x="120" y="260" width="560" height="260" rx="24" fill="' + color + '" fill-opacity="0.45"/>';
-      labelY = 300; labelX = w / 2; anchor = 'middle';
-    } else if (kind === 'feet') {
-      shape =
-        '<rect x="150" y="520" width="26" height="40" fill="' + color + '"/>' +
-        '<rect x="624" y="520" width="26" height="40" fill="' + color + '"/>';
-      labelY = 580;
-    }
-
-    var safeLabel = String(label || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
-    var svg =
-      '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">' +
-      shape +
-      '<text x="' + labelX + '" y="' + labelY + '" font-family="sans-serif" font-size="16" fill="#2c2a25" text-anchor="' + anchor + '">' + safeLabel + '</text>' +
-      '</svg>';
-    return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+  function escapeXml(str) {
+    return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
   }
 
-  // Liefert die Bildquelle für einen Vorschau-Layer: echtes Foto, falls in
-  // den Daten hinterlegt (previewImage), sonst der generierte Platzhalter.
-  function layerImage(kind, option, label, color) {
-    if (option && option.previewImage) return option.previewImage;
-    return placeholderLayerSvg(kind, label, color);
+  function darkenHex(hex, amount) {
+    hex = (hex || '#c9c2b2').replace('#', '');
+    if (hex.length === 3) hex = hex.split('').map(function (c) { return c + c; }).join('');
+    var num = parseInt(hex, 16);
+    var r = Math.max(0, (num >> 16) - amount);
+    var g = Math.max(0, ((num >> 8) & 0xff) - amount);
+    var b = Math.max(0, (num & 0xff) - amount);
+    return '#' + [r, g, b].map(function (v) { return v.toString(16).padStart(2, '0'); }).join('');
+  }
+
+  // Kopfteil-Formen. `shape`-Feld auf einem Kopfteil in den Daten wählt
+  // eine davon; unbekannt/fehlend -> 'panel' (schlichtes Panel).
+  var HEADBOARD_SHAPES = {
+    panel: function (x, y, w, h, fill) {
+      return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="18" fill="' + fill + '"/>';
+    },
+    channel: function (x, y, w, h, fill) {
+      var dark = darkenHex(fill, 30);
+      var lines = '';
+      var count = 7;
+      for (var i = 1; i < count; i++) {
+        var lx = x + (w / count) * i;
+        lines += '<line x1="' + lx + '" y1="' + (y + 16) + '" x2="' + lx + '" y2="' + (y + h - 16) + '" stroke="' + dark + '" stroke-width="3" opacity="0.5"/>';
+      }
+      return HEADBOARD_SHAPES.panel(x, y, w, h, fill) + lines;
+    },
+    wing: function (x, y, w, h, fill) {
+      return (
+        '<rect x="' + (x - 22) + '" y="' + (y - 18) + '" width="46" height="' + (h + 30) + '" rx="20" fill="' + fill + '"/>' +
+        '<rect x="' + (x + w - 24) + '" y="' + (y - 18) + '" width="46" height="' + (h + 30) + '" rx="20" fill="' + fill + '"/>' +
+        HEADBOARD_SHAPES.panel(x, y, w, h, fill)
+      );
+    }
+  };
+
+  // Fuß-Formen. `shape`-Feld auf einem Fuß in den Daten wählt eine davon;
+  // unbekannt/fehlend -> 'peg' (schlichter Kegel-/Holzfuß).
+  var FEET_SHAPES = {
+    peg: function (cx, topY, len, color) {
+      var bx = len * 0.14;
+      return '<polygon points="' + (cx - 11) + ',' + topY + ' ' + (cx + 11) + ',' + topY + ' ' + (cx + bx) + ',' + (topY + len) + ' ' + (cx - bx) + ',' + (topY + len) + '" fill="' + color + '"/>';
+    },
+    cylinder: function (cx, topY, len, color) {
+      return (
+        '<rect x="' + (cx - 6) + '" y="' + topY + '" width="12" height="' + len + '" rx="6" fill="' + color + '"/>' +
+        '<rect x="' + (cx - 3) + '" y="' + (topY + 4) + '" width="3" height="' + (len - 8) + '" rx="1.5" fill="#ffffff" opacity="0.35"/>'
+      );
+    }
+  };
+
+  // Extra-Visualisierungen. `visual`-Feld auf einem Extra in den Daten
+  // wählt eine davon; unbekannt/fehlend -> keine Visualisierung (Extra
+  // bleibt nur in Preis/Zusammenfassung sichtbar, nicht im Bild).
+  var EXTRA_VISUALS = {
+    usbIcon: function (parts) {
+      parts.push('<rect x="612" y="212" width="40" height="22" rx="4" fill="#2c2a25"/>');
+      parts.push('<text x="632" y="227" font-family="sans-serif" font-size="10" fill="#fff" text-anchor="middle">USB</text>');
+    },
+    ledGlow: function (parts) {
+      parts.push('<rect x="90" y="224" width="620" height="36" rx="18" fill="#ffe9a8" opacity="0.28"/>');
+      parts.push('<rect x="112" y="236" width="576" height="12" rx="6" fill="#ffe9a8" opacity="0.9"/>');
+    }
+  };
+
+  /**
+   * Baut die komplette Bett-Illustration (ein SVG, 800×600) aus dem
+   * aktuellen Auswahl-Kontext: Kopfteil-Form + Stofffarbe (Kopfteil UND Box
+   * bekommen denselben Stoff, wie bei einem echten Boxspringbett), Matratze
+   * mit Steppnähten, optionaler Topper-Schicht, Füße (Form + Farbe je nach
+   * Auswahl), sichtbare Extras. Reine Platzhalter-Grafik, kein Produktfoto.
+   */
+  function buildBedIllustration(ctx) {
+    var w = 800, h = 600;
+    var parts = [];
+
+    parts.push('<rect x="0" y="0" width="' + w + '" height="' + h + '" fill="' + ctx.sceneColor + '"/>');
+    parts.push('<rect x="0" y="' + (h * 0.8) + '" width="' + w + '" height="' + (h * 0.2) + '" fill="' + darkenHex(ctx.sceneColor, 10) + '"/>');
+
+    ctx.extraVisuals.forEach(function (visual) {
+      if (visual === 'ledGlow') EXTRA_VISUALS.ledGlow(parts);
+    });
+
+    var headboardFn = HEADBOARD_SHAPES[ctx.headboardShape] || HEADBOARD_SHAPES.panel;
+    parts.push(headboardFn(140, 60, 520, 190, ctx.fabricColor));
+
+    // Box, gepolstert im selben Stoff wie das Kopfteil.
+    parts.push('<rect x="120" y="270" width="560" height="150" rx="18" fill="' + ctx.fabricColor + '"/>');
+    parts.push('<rect x="120" y="270" width="560" height="150" rx="18" fill="none" stroke="' + darkenHex(ctx.fabricColor, 30) + '" stroke-width="2" opacity="0.4"/>');
+
+    // Matratze mit angedeuteten Steppnähten.
+    parts.push('<rect x="130" y="235" width="540" height="55" rx="14" fill="#f7f5ef"/>');
+    for (var i = 0; i < 8; i++) {
+      var lx = 150 + i * 68;
+      parts.push('<line x1="' + lx + '" y1="242" x2="' + lx + '" y2="283" stroke="#e2ddd0" stroke-width="2"/>');
+    }
+
+    if (ctx.hasTopper) {
+      parts.push('<rect x="140" y="220" width="520" height="24" rx="10" fill="#fffdf8" stroke="#e2ddd0" stroke-width="1"/>');
+    }
+
+    var feetFn = FEET_SHAPES[ctx.feetShape] || FEET_SHAPES.peg;
+    [170, 630].forEach(function (cx) {
+      parts.push(feetFn(cx, 420, ctx.feetLength, ctx.feetColor));
+    });
+
+    ctx.extraVisuals.forEach(function (visual) {
+      if (visual === 'usbIcon') EXTRA_VISUALS.usbIcon(parts);
+    });
+
+    parts.push('<text x="16" y="24" font-family="sans-serif" font-size="15" fill="#2c2a25">' + escapeXml(ctx.seriesLabel) + '</text>');
+
+    return '<svg class="bc-bed-illustration" xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">' + parts.join('') + '</svg>';
   }
 
   function optionLabel(step, option) {
@@ -381,20 +465,28 @@
 
     var sizeLabel = size ? size.width + ' × ' + size.length + ' cm' : '';
     var seriesLabel = (series ? series.name : this.data.brand || 'Bett') + (sizeLabel ? ' · ' + sizeLabel : '');
+    var topper = findById(this.data.toppers, this.selection.topper);
 
-    var layers = [
-      { kind: 'base', option: series, label: seriesLabel, color: series && series.previewSwatch },
-      { kind: 'headboard', option: headboard, label: 'Kopfteil: ' + (headboard ? headboard.name : '—'), color: '#c2b9a5' },
-      { kind: 'fabric', option: fabric, label: fabric ? fabric.name : '', color: (fabric && fabric.swatchColor) || '#b7ae9c' },
-      { kind: 'feet', option: feet, label: '', color: '#4a463d' }
-    ];
+    // Welche gewählten Extras haben eine Bild-Visualisierung? Jedes Extra
+    // trägt dafür optional ein `visual`-Feld in den Daten (siehe
+    // EXTRA_VISUALS) – neue Extras mit bekanntem visual-Typ tauchen so
+    // automatisch im Bild auf, ohne dass dieser Code geändert wird.
+    var extraVisuals = this.selection.extras
+      .map(function (id) { return findById(self.data.extras, id); })
+      .filter(function (extra) { return extra && extra.visual && EXTRA_VISUALS[extra.visual]; })
+      .map(function (extra) { return extra.visual; });
 
-    var layersHtml = layers
-      .map(function (layer, i) {
-        var src = layerImage(layer.kind, layer.option, layer.label, layer.color);
-        return '<img class="bc-layer" style="z-index:' + i + '" src="' + src + '" alt="' + layer.label.replace(/"/g, '&quot;') + '">';
-      })
-      .join('');
+    var bedSvg = buildBedIllustration({
+      sceneColor: (series && series.previewSwatch) || '#efece4',
+      headboardShape: (headboard && headboard.shape) || 'panel',
+      fabricColor: (fabric && fabric.swatchColor) || '#b7ae9c',
+      feetShape: (feet && feet.shape) || 'peg',
+      feetColor: (feet && feet.swatchColor) || '#4a463d',
+      feetLength: (feet && feet.footLength) || 40,
+      hasTopper: !!(topper && topper.id !== 'none'),
+      extraVisuals: extraVisuals,
+      seriesLabel: seriesLabel
+    });
 
     var dotsHtml = GALLERY_SLIDES
       .map(function (slide, i) {
@@ -405,7 +497,7 @@
     var deliveryText = (series && series.deliveryText) || 'Lieferzeit: wird nach Freigabe ergänzt';
 
     this.previewEl.innerHTML =
-      '<div class="bc-gallery-viewport" data-bc-gallery-viewport style="transform:' + GALLERY_SLIDES[this.slideIndex].transform + '">' + layersHtml + '</div>' +
+      '<div class="bc-gallery-viewport" data-bc-gallery-viewport style="transform:' + GALLERY_SLIDES[this.slideIndex].transform + '">' + bedSvg + '</div>' +
       '<button type="button" class="bc-gallery-arrow bc-gallery-prev" data-bc-prev aria-label="Vorheriges Bild">‹</button>' +
       '<button type="button" class="bc-gallery-arrow bc-gallery-next" data-bc-next aria-label="Nächstes Bild">›</button>' +
       '<div class="bc-gallery-dots">' + dotsHtml + '</div>' +

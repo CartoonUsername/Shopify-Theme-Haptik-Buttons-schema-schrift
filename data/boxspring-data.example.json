@@ -59,24 +59,25 @@
       "compatibleToppers": ["memory_6cm", "none"]
     }
   ],
+  "_comment_shapes": "shape/swatchColor/footLength/visual steuern nur die Platzhalter-Illustration (boxspring-configurator.js, buildBedIllustration). Bekannte Kopfteil-Formen: panel/channel/wing. Bekannte Fuß-Formen: peg/cylinder. Bekannte Extra-Visuals: usbIcon/ledGlow. Fehlt ein Feld, greift ein neutraler Standard (panel/peg/keine Visualisierung) – neue Optionen brauchen also kein Bild, funktionieren aber besser damit.",
   "headboards": [
-    { "id": "lino", "name": "Lino", "priceDelta": 0, "previewImage": null },
-    { "id": "vasto", "name": "Vasto", "priceDelta": 180, "previewImage": null },
-    { "id": "aurora", "name": "Aurora", "priceDelta": 320, "previewImage": null }
+    { "id": "lino", "name": "Lino", "priceDelta": 0, "shape": "panel" },
+    { "id": "vasto", "name": "Vasto", "priceDelta": 180, "shape": "channel" },
+    { "id": "aurora", "name": "Aurora", "priceDelta": 320, "shape": "wing" }
   ],
   "fabrics": [
-    { "id": "fabric_basic_grau", "name": "Feiner Stoff – Grau", "group": "basic", "priceDelta": 0, "swatchColor": "#9c9488", "previewImage": null },
-    { "id": "fabric_boucle_beige", "name": "Bouclé – Beige", "group": "bouclé", "priceDelta": 220, "swatchColor": "#cbb99a", "previewImage": null }
+    { "id": "fabric_basic_grau", "name": "Feiner Stoff – Grau", "group": "basic", "priceDelta": 0, "swatchColor": "#9c9488" },
+    { "id": "fabric_boucle_beige", "name": "Bouclé – Beige", "group": "bouclé", "priceDelta": 220, "swatchColor": "#cbb99a" }
   ],
   "boxes": [
     { "id": "classic", "name": "Classic Box", "priceDelta": 0 },
     { "id": "premium", "name": "Premium Box", "priceDelta": 250 }
   ],
   "feet": [
-    { "id": "wood_low", "name": "Holzfuß niedrig", "priceDelta": 0, "previewImage": null },
-    { "id": "wood_high", "name": "Holzfuß hoch", "priceDelta": 20, "previewImage": null },
-    { "id": "metal_chrome", "name": "Metallfuß Chrom", "priceDelta": 40, "previewImage": null },
-    { "id": "metal_black", "name": "Metallfuß Schwarz", "priceDelta": 40, "previewImage": null }
+    { "id": "wood_low", "name": "Holzfuß niedrig", "priceDelta": 0, "shape": "peg", "swatchColor": "#8a6a45", "footLength": 30 },
+    { "id": "wood_high", "name": "Holzfuß hoch", "priceDelta": 20, "shape": "peg", "swatchColor": "#8a6a45", "footLength": 48 },
+    { "id": "metal_chrome", "name": "Metallfuß Chrom", "priceDelta": 40, "shape": "cylinder", "swatchColor": "#c9ccd1", "footLength": 40 },
+    { "id": "metal_black", "name": "Metallfuß Schwarz", "priceDelta": 40, "shape": "cylinder", "swatchColor": "#2b2b2b", "footLength": 40 }
   ],
   "mattresses": [
     { "id": "standard_7zone", "name": "7-Zonen Standard", "priceDelta": 0 },
@@ -88,7 +89,7 @@
     { "id": "memory_6cm", "name": "Memory Topper 6cm", "priceDelta": 180 }
   ],
   "extras": [
-    { "id": "usb_charging", "name": "USB-Ladeanschluss Kopfteil", "priceDelta": 59 },
-    { "id": "led_ambient", "name": "LED-Ambientebeleuchtung", "priceDelta": 89 }
+    { "id": "usb_charging", "name": "USB-Ladeanschluss Kopfteil", "priceDelta": 59, "visual": "usbIcon" },
+    { "id": "led_ambient", "name": "LED-Ambientebeleuchtung", "priceDelta": 89, "visual": "ledGlow" }
   ]
 }
