@@ -1,0 +1,11 @@
+{
+  "sections": {
+    "main": {
+      "type": "boxspring-configurator",
+      "settings": {
+        "add_to_cart_label": "In den Warenkorb"
+      }
+    }
+  },
+  "order": ["main"]
+}

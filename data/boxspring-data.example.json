@@ -1,0 +1,83 @@
+{
+  "_comment": "PLATZHALTER-DATEN. Muss mit echten Mozart-Daten (Serien, Größen, Aufpreise, Bilder) ersetzt werden, sobald verfügbar. Struktur ist final gedacht, Werte nicht.",
+  "version": "0.0.1-placeholder",
+  "currency": "EUR",
+  "series": [
+    {
+      "id": "serie5",
+      "name": "Serie 5",
+      "tagline": "Originaler Boxspring, 7-Zonen-Tonnentaschenfederkern",
+      "sizes": [
+        { "id": "160x200", "width": 160, "length": 200, "basePrice": 1499 },
+        { "id": "180x200", "width": 180, "length": 200, "basePrice": 1699 },
+        { "id": "200x200", "width": 200, "length": 200, "basePrice": 1899 }
+      ],
+      "compatibleHeadboards": ["salieri", "chopin"],
+      "compatibleBoxes": ["classic"],
+      "compatibleFeet": ["wood_low", "wood_high", "metal_chrome"],
+      "compatibleMattresses": ["standard_7zone"],
+      "compatibleToppers": ["memory_4cm", "none"]
+    },
+    {
+      "id": "serie7",
+      "name": "Serie 7",
+      "tagline": "Ultimativer Komfort, doppelter Tonnentaschenfederkern",
+      "sizes": [
+        { "id": "160x200", "width": 160, "length": 200, "basePrice": 2199 },
+        { "id": "180x200", "width": 180, "length": 200, "basePrice": 2499 },
+        { "id": "200x200", "width": 200, "length": 200, "basePrice": 2799 }
+      ],
+      "compatibleHeadboards": ["salieri", "chopin", "mahler"],
+      "compatibleBoxes": ["classic", "premium"],
+      "compatibleFeet": ["wood_low", "wood_high", "metal_chrome", "metal_black"],
+      "compatibleMattresses": ["standard_7zone", "royal"],
+      "compatibleToppers": ["memory_4cm", "memory_6cm", "none"]
+    },
+    {
+      "id": "serie9",
+      "name": "Serie 9",
+      "tagline": "Luxus Edition, TwinSpring-Technologie",
+      "sizes": [
+        { "id": "180x200", "width": 180, "length": 200, "basePrice": 3299 },
+        { "id": "200x200", "width": 200, "length": 200, "basePrice": 3599 }
+      ],
+      "compatibleHeadboards": ["chopin", "mahler"],
+      "compatibleBoxes": ["premium"],
+      "compatibleFeet": ["metal_chrome", "metal_black"],
+      "compatibleMattresses": ["royal"],
+      "compatibleToppers": ["memory_6cm", "none"]
+    }
+  ],
+  "headboards": [
+    { "id": "salieri", "name": "Salieri", "priceDelta": 0, "image": "" },
+    { "id": "chopin", "name": "Chopin", "priceDelta": 180, "image": "" },
+    { "id": "mahler", "name": "Mahler", "priceDelta": 320, "image": "" }
+  ],
+  "fabrics": [
+    { "id": "fabric_basic_grau", "name": "Feiner Stoff – Grau", "group": "basic", "priceDelta": 0, "image": "" },
+    { "id": "fabric_bouclé_beige", "name": "Bouclé – Beige", "group": "bouclé", "priceDelta": 220, "image": "" }
+  ],
+  "boxes": [
+    { "id": "classic", "name": "Classic Box", "priceDelta": 0 },
+    { "id": "premium", "name": "Premium Box", "priceDelta": 250 }
+  ],
+  "feet": [
+    { "id": "wood_low", "name": "Holzfuß niedrig", "priceDelta": 0 },
+    { "id": "wood_high", "name": "Holzfuß hoch", "priceDelta": 20 },
+    { "id": "metal_chrome", "name": "Metallfuß Chrom", "priceDelta": 40 },
+    { "id": "metal_black", "name": "Metallfuß Schwarz", "priceDelta": 40 }
+  ],
+  "mattresses": [
+    { "id": "standard_7zone", "name": "7-Zonen Standard", "priceDelta": 0 },
+    { "id": "royal", "name": "Königliche Matratze", "priceDelta": 450 }
+  ],
+  "toppers": [
+    { "id": "none", "name": "Kein Topper", "priceDelta": 0 },
+    { "id": "memory_4cm", "name": "Memory Topper 4cm", "priceDelta": 120 },
+    { "id": "memory_6cm", "name": "Memory Topper 6cm", "priceDelta": 180 }
+  ],
+  "extras": [
+    { "id": "usb_charging", "name": "USB-Ladeanschluss Kopfteil", "priceDelta": 59 },
+    { "id": "led_ambient", "name": "LED-Ambientebeleuchtung", "priceDelta": 89 }
+  ]
+}

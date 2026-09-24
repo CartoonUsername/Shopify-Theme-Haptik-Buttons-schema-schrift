@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<title>Boxspring-Konfigurator – Lokale Vorschau</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="assets/boxspring-configurator.css?v=1" />
+<style>
+  body { margin: 0; padding: 24px; background: #fafafa; font-family: -apple-system, sans-serif; }
+</style>
+</head>
+<body>
+
+<div class="boxspring-configurator" id="boxspring-configurator-preview">
+  <div class="bc-steps" role="tablist" aria-label="Konfigurationsschritte"></div>
+
+  <div class="bc-layout">
+    <div class="bc-preview">
+      <div class="bc-preview-image" data-bc-preview></div>
+      <div class="bc-price" data-bc-price></div>
+    </div>
+
+    <div class="bc-options" data-bc-options></div>
+  </div>
+
+  <div class="bc-summary" data-bc-summary></div>
+
+  <button type="button" class="bc-add-to-cart" data-bc-add-to-cart>In den Warenkorb</button>
+
+  <script type="application/json" data-bc-config>
+    {
+      "productId": null,
+      "variantId": null,
+      "currency": "EUR",
+      "pricingWorkerUrl": "",
+      "addToCartLabel": "In den Warenkorb",
+      "dataUrl": "data/boxspring-data.example.json"
+    }
+  </script>
+</div>
+
+<script src="assets/boxspring-configurator.js?v=1"></script>
+<script>
+  window.BoxspringConfiguratorOnAddToCart = function (payload) {
+    alert('Vorschau: würde jetzt an Worker senden.\n\n' + JSON.stringify(payload, null, 2));
+  };
+</script>
+</body>
+</html>

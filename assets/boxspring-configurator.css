@@ -1,0 +1,130 @@
+.boxspring-configurator {
+  --bc-gap: 16px;
+  --bc-border: #e2e2e2;
+  --bc-accent: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  gap: var(--bc-gap);
+  max-width: 1100px;
+  margin: 0 auto;
+  font-family: inherit;
+}
+
+.bc-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 1px solid var(--bc-border);
+  padding-bottom: 12px;
+}
+
+.bc-step-btn {
+  padding: 8px 14px;
+  border: 1px solid var(--bc-border);
+  border-radius: 999px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.bc-step-btn.is-active {
+  background: var(--bc-accent);
+  color: #fff;
+  border-color: var(--bc-accent);
+}
+
+.bc-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: var(--bc-gap);
+}
+
+@media (max-width: 768px) {
+  .bc-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bc-preview {
+  position: sticky;
+  top: 16px;
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bc-preview-image {
+  aspect-ratio: 4 / 3;
+  background: #f4f4f4;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+}
+
+.bc-price {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.bc-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  align-content: start;
+}
+
+.bc-option-card {
+  border: 1px solid var(--bc-border);
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bc-option-card.is-selected {
+  border-color: var(--bc-accent);
+  box-shadow: 0 0 0 1px var(--bc-accent) inset;
+}
+
+.bc-option-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.bc-option-price {
+  font-size: 13px;
+  color: #666;
+}
+
+.bc-summary {
+  border-top: 1px solid var(--bc-border);
+  padding-top: 12px;
+  font-size: 14px;
+  color: #444;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 4px;
+}
+
+.bc-add-to-cart {
+  align-self: flex-start;
+  padding: 14px 28px;
+  background: var(--bc-accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.bc-add-to-cart:hover {
+  opacity: 0.9;
+}

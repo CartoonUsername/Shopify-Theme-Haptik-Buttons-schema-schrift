@@ -1,0 +1,75 @@
+<div
+  class="boxspring-configurator"
+  id="boxspring-configurator-{{ section.id }}"
+  data-section-id="{{ section.id }}"
+>
+  <div class="bc-steps" role="tablist" aria-label="Konfigurationsschritte"></div>
+
+  <div class="bc-layout">
+    <div class="bc-preview">
+      <div class="bc-preview-image" data-bc-preview></div>
+      <div class="bc-price" data-bc-price></div>
+    </div>
+
+    <div class="bc-options" data-bc-options></div>
+  </div>
+
+  <div class="bc-summary" data-bc-summary></div>
+
+  <button type="button" class="bc-add-to-cart" data-bc-add-to-cart>
+    {{ section.settings.add_to_cart_label | default: 'In den Warenkorb' }}
+  </button>
+
+  <script type="application/json" data-bc-config>
+    {
+      "productId": {{ section.settings.product.id | json }},
+      "variantId": {{ section.settings.carrier_variant_id | json }},
+      "currency": {{ cart.currency.iso_code | json }},
+      "pricingWorkerUrl": {{ section.settings.pricing_worker_url | json }},
+      "addToCartLabel": {{ section.settings.add_to_cart_label | json }},
+      "dataUrl": {{ section.settings.data_asset | asset_url | json }}
+    }
+  </script>
+</div>
+
+{% schema %}
+{
+  "name": "Boxspring-Konfigurator",
+  "tag": "section",
+  "class": "section-boxspring-configurator",
+  "settings": [
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Trägerprodukt (für Warenkorb-Bild/Steuer)"
+    },
+    {
+      "type": "text",
+      "id": "carrier_variant_id",
+      "label": "Träger-Varianten-ID (für Draft Order, überschreibt Preis)"
+    },
+    {
+      "type": "url",
+      "id": "pricing_worker_url",
+      "label": "Pricing-Worker-URL (leer = kein Checkout-Override)"
+    },
+    {
+      "type": "text",
+      "id": "data_asset",
+      "label": "Dateiname der Preis-/Optionsdaten (assets/boxspring-data.json)",
+      "default": "boxspring-data.json"
+    },
+    {
+      "type": "text",
+      "id": "add_to_cart_label",
+      "label": "Button-Text",
+      "default": "In den Warenkorb"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Boxspring-Konfigurator"
+    }
+  ]
+}
+{% endschema %}
